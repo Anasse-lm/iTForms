@@ -1,0 +1,64 @@
+﻿<div class="col-lg-2">
+    <div class="custom-select">
+        <select name="ownership" id="ownership">
+            <option value="owned-by-me" selected>Owned by me</option>
+            <option value="owned-by-anyone">Owned by anyone</option>
+            <option value="not-owned-by-me">Not owned by me</option>
+        </select>
+        <span class="custom-arrow">▼</span>
+    </div>
+</div>
+
+<style>
+/* Custom Select Styling */
+.custom-select {
+    position: relative;
+    width: 100%;
+    max-width: 200px; /* Adjust as needed */
+}
+
+.custom-select select {
+    appearance: none; /* Remove default arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: 7px;
+    font-size: 16px;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.custom-select select:hover {
+    border-color: #999;
+}
+
+.custom-select select:focus {
+    border-color: #007bff;
+}
+
+/* Custom Arrow */
+.custom-arrow {
+    position: absolute;
+    top: 50%;
+    right: 40%;
+    transform: translateY(-50%);
+    pointer-events: none; /* Ensure clicks pass through to the select */
+    color: #313030;
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+/* Arrow Animation on Focus */
+.custom-select select:focus ~ .custom-arrow {
+    transform: translateY(-50%) rotate(180deg);
+}
+@@media (max-width: 992px) {
+    .custom-select {
+        max-width: 100%;
+    }
+}
+</style>

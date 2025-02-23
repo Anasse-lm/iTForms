@@ -1,0 +1,186 @@
+﻿@using CloudinaryDotNet;
+@using CloudinaryDotNet.Actions;
+@using iTFORMS.Models;
+@using iTFORMS.Models.Enums;
+@inject Cloudinary CloudinaryService;
+@inject HttpClient Http;
+
+<div class="card shadow col-lg-6 offset-3">
+    <div class="card-body">
+        <div class="offset-4 col-12 col-lg-3 col-md-3 mb-2 publish-row">
+            <input @bind="@TitleValue" @bind:event="oninput" class="form-control text-center" onclick="this.select()"/>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label fw-bold">Description</label>
+            <textarea class="form-control" @bind="Template.Description" rows="4"></textarea>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">Template Type</label>
+                    <select class="form-select" @bind="Template.TemplateType">
+                        @foreach (var type in Enum.GetValues(typeof(TemplateType)))
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">Access Type</label>
+                    <select class="form-select" @bind="Template.AccessType">
+                        @foreach (var access in Enum.GetValues(typeof(iTFORMS.Models.Enums.AccessType)))
+                        {
+                            <option value="@access">@access</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">Topic</label>
+                    <InputSelect class="form-select" @bind-Value="Template.TopicId">
+                        @if(Topics.Any()) {
+                            @foreach (var topic in Topics)
+                            {
+                                <option value="@topic.Id">@topic.Name</option>
+                            }
+                        }else {
+                            <option value="">None</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">Image</label>
+                    <InputFile class="form-control" 
+                                OnChange="UploadImage" 
+                                accept=".jpg,.jpeg,.png,.gif"/>
+                    @if (!string.IsNullOrEmpty(Template.ImageUrl))
+                    {
+                        <div class="mt-2">
+                            <img src="@Template.ImageUrl" class="img-thumbnail" style="max-height: 100px" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 offset-4">
+                <!-- Add other form fields -->
+                <div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Success</h5>
+                                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Template settings saved successfuly</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" @onclick="CloseModal">Close</button>
+                            </div>
+                        </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" 
+                    @onclick="SaveSettings">Save Changes
+            </button>
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- Style  -->
+<style>
+    .publish-row input{
+        border: none;
+        border-radius: 0;
+        font-size: 20px;
+    }
+    .publish-row input:focus{
+        border-radius: 0;
+        border-bottom: 2px solid black;
+        justify-content: ;
+    }
+    .template {
+        border: 1px solid black;
+        height: 250px;
+    }
+    
+</style>
+
+@code {
+    [Parameter] public Template Template { get; set; }
+    [Parameter] public List<Topic> Topics { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public bool ShowModal { get; set; }
+    [Parameter] public EventCallback<bool> ShowModalChanged { get; set; }
+
+    private string valueStr = "";
+
+    private string DisplayValue
+    {
+        get => string.IsNullOrEmpty(valueStr.Trim()) ? "Untitled form" : valueStr;
+        set => valueStr = value == "Untitled form" ? "" : value;
+    }
+    private string TitleValue
+    {
+        get => string.IsNullOrEmpty(Template.Title) ? DisplayValue : Template.Title;
+        set => Template.Title = value;
+    }
+
+    private async Task CloseModal()
+    {
+        await ShowModalChanged.InvokeAsync(false);
+    }
+    public void SaveSettings() {
+        OnSave.InvokeAsync();
+    }
+
+    private async Task UploadImage(InputFileChangeEventArgs e)
+    {
+        var file = e.GetMultipleFiles(1).FirstOrDefault(); // Get first file
+        if (file == null || !IsValidImage(file)) return;
+
+        try 
+        {
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(memoryStream);
+            memoryStream.Position = 0; // ← Critical reset!
+
+            var uploadResult = await CloudinaryService.UploadAsync(new ImageUploadParams
+            {
+                File = new FileDescription(file.Name, memoryStream),
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true
+            });
+
+            Template.ImageUrl = uploadResult.SecureUrl.ToString();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Upload failed: {ex.Message}");
+        }
+    }
+
+
+    private bool IsValidImage(IBrowserFile file)
+    {
+        var validTypes = new[] { "image/jpeg", "image/png", "image/gif" };
+        return validTypes.Contains(file.ContentType) 
+            && file.Size <= 5 * 1024 * 1024; // 5MB
+    }
+
+}

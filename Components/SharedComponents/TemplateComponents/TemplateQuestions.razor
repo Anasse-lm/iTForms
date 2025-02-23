@@ -1,0 +1,82 @@
+﻿@using iTFORMS.Models.Enums
+
+<!-- TemplateQuestions.razor -->
+<div class="card col-lg-8 offset-2" style="background-color: transparent; border:none ">
+    <div class="card-body">
+        <div>
+            @if (Template.Questions.Any()) {
+                <QuestionEditor
+                        Questions="@Template.Questions"
+                        OnDelete="DeleteQuestion"
+                        QuestionsChanged="OnQuestionsUpdated" />
+            }
+
+            @if (showQuestionCreator)
+            {
+                <div class="card shadow">
+                    <div class="card-body">
+                        <QuestionCreator Question="@newQuestion" OnSave="SaveNewQuestion" OnCancel="CloseQuestionCreator" />
+                    </div>
+                </div>
+            }
+        </div>
+        @if(showAddNewBtn){
+            <button @onclick="ShowQuestionCreator" class="btn btn-primary mt-3">Add New Question</button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Template Template { get; set; }
+    [Parameter] public EventCallback OnPublish { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Question>> OnQuestionsUpdated { get; set; }
+
+    public Question newQuestion = new Question();
+
+    private bool showQuestionCreator = false;
+    private bool showAddNewBtn = true;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            showAddNewBtn = Template.Questions == null || !Template.Questions.Any();
+            StateHasChanged();
+        }
+    }
+
+
+    private void ShowQuestionCreator()
+    {
+        showQuestionCreator = true;
+    }
+
+    private void CloseQuestionCreator()
+    {
+        showQuestionCreator = false;
+    }
+
+    private async Task SaveNewQuestion(Question newQuestion)
+    {
+        if (Template.Questions == null)
+        {
+            Template.Questions = new List<Question>();
+        }
+
+        Template.Questions.Add(newQuestion);
+        await OnQuestionsUpdated.InvokeAsync(Template.Questions);
+        showQuestionCreator = false;
+        showAddNewBtn = false;
+        StateHasChanged();
+    }
+    
+    private void DeleteQuestion(Question question)
+    {
+        Template.Questions.Remove(question);
+        StateHasChanged();
+    }
+    
+}

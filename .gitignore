@@ -1,0 +1,78 @@
+# General
+*.user
+*.suo
+*.userprefs
+*.cache
+*.pidb
+*.log
+*.nupkg
+*.DS_Store
+Thumbs.db
+
+# Build Outputs
+bin/
+obj/
+[Bb]uild/
+artifacts/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Runtime
+**/wwwroot/lib/
+.publish/
+
+# NuGet
+packages/
+*.nupkg
+nuget.exe
+
+# Environment Files
+.env
+*.env.local
+*.env.*.local
+appsettings.Development.json
+
+# Tests
+TestResults/
+coverage/**
+
+# Debug Files
+*.ilk
+*.pdb
+
+# Azure Functions
+funcsecrets.json
+
+# JetBrains Rider
+.idea/
+
+# VS Cache
+.vs/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+**/.docker/
+
+# Local Development
+local.settings.json
+
+# Node.js (if using client-side Blazor)
+node_modules/
+jspm_packages/
+
+# Editors
+*.swp
+*.swo
+
+# Misc
+*.sql
+*.sqlite
+*.bak
+*.pyc

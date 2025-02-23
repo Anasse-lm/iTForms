@@ -1,0 +1,232 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using iTFORMS.Models.Enums
+@inject IJSRuntime JSRuntime
+
+<div class="question-editor card mb-4" style="background-color: transparent; border: none;">
+    <div class="card-body" >
+        <div class="questions-list" @ref="questionsContainer">
+            @if (Questions != null) {
+                @foreach (var question in Questions)
+                {
+                    <div class="question-item mb-3 card shadow p-3" data-question-id="@question.QuestionId" @key="question.QuestionId">
+                        <div class="question-header d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0"><strong>Question @(Questions.IndexOf(question) + 1) </strong></h5>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-lg-8">
+                                <input id="questionTitle" class="form-control" 
+                                    @bind="question.Title"
+                                    @bind:event="oninput" />
+                            </div>
+
+                            <div class="col-lg-4">
+                                <select id="questionType" class="form-select" @bind="question.QuestionType">
+                                    @foreach (var type in Enum.GetValues(typeof(QuestionType)).Cast<QuestionType>())
+                                    {
+                                        @switch (type)
+                                        {
+                                            case QuestionType.SingleLine:
+                                                <option value="@type">Short Answer</option>
+                                                break;
+
+                                            case QuestionType.Paragraph:
+                                                <option value="@type">Long Text Answer</option>
+                                                break;
+
+                                            case QuestionType.MultipleChoice:
+                                                <option value="@type">Multiple Choice</option>
+                                                break;
+
+                                            case QuestionType.CheckBox:
+                                                <option value="@type">CheckBox Answer</option>
+                                                break;
+
+                                            case QuestionType.Integer:
+                                                <option value="@type">Number</option>
+                                                break;
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="form-group  col-lg-5 answerType">
+                                @switch (question.QuestionType)
+                                {
+                                    case QuestionType.SingleLine:
+                                        <p><strong>Short</strong> Answer</p>
+                                        break;
+
+                                    case QuestionType.Paragraph:
+                                        <p><strong>Long Text</strong> Answer</p>
+                                        break;
+
+                                    case QuestionType.Integer:
+                                        <p><strong>Integer</strong> Answer</p>
+                                        break;
+
+                                    case QuestionType.MultipleChoice:
+                                        <p><strong>Multiple Choice</strong> Answer</p>
+                                        break;
+
+                                    case QuestionType.CheckBox:
+                                        <p><strong>CheckBox</strong> Answer</p>
+                                        break;
+                                }
+                            </div>
+                        </div>
+
+                        @if (question.QuestionType == QuestionType.MultipleChoice || question.QuestionType == QuestionType.CheckBox)
+                        {
+                            <div class="options-section">
+                                <h6 style="font: bold;">Options</h6>
+                                @if (question.Options != null) {
+                                    @foreach (var option in question.Options)
+                                    {
+                                        <div class="option-item d-flex align-items-center gap-2 mb-2">
+                                            <input class="form-control form-control-sm" 
+                                                @bind="option.Text" 
+                                                @bind:event="oninput" />
+                                            <button class="btn btn-sm" 
+                                                    @onclick="() => DeleteOption(question, option)">
+                                                <i class="material-icons">delete</i>
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                                <input class="form-control form-control-sm col-lg-4" 
+                                            @bind="Option.Text" 
+                                            @bind:event="oninput" placeholder="Enter new option here..."/>
+
+                                <button class="btn btn-sm btn-primary mt-2"
+                                        @onclick="() => AddOption(question)">
+                                    Add Option
+                                </button>
+                            </div>
+                        }
+                        <button class="d-flex justify-content-end btn btn-sm col-lg-2 offset-10" @onclick="() => DeleteQuestion(question)">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </div>
+                    
+                }
+            }
+        </div>
+
+        <div class="mt-3">
+            <button class="btn btn-primary" @onclick="AddQuestion">
+                <i class="bi bi-plus-circle me-2"></i>Add New Question
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    #questionTitle {
+        border-radius:0 ;
+        border: none;
+    }
+
+    #questionTitle:focus {
+        border-bottom:1px solid #252424 ;
+    }
+
+    #questionType {
+        border-radius:0 ;
+        border: none;
+        border-bottom:1px solid #252424 ;
+        outline: 0;
+        box-shadow: 0 0 0 0 #252424;
+    }
+
+    #questionType:focus {
+        border-bottom:1px solid #252424 ;
+    }
+
+    .answerType p{
+        border-bottom: 1px solid #919090;
+        color: #767575; 
+        font-size: 14px;
+    }
+</style>
+
+@code {
+    private ElementReference questionsContainer;
+    private bool isInitialized = false;
+
+    [Parameter]
+    public List<Question> Questions { get; set; }
+    private QuestionOption Option {get; set;} = new();
+    
+    [Parameter]
+    public EventCallback<List<Question>> QuestionsChanged { get; set; }
+    
+    [Parameter]
+    public EventCallback<Question> OnDelete { get; set; }
+    
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isInitialized)
+        {
+            await InitializeSortable();
+            isInitialized = true;
+        }
+    }
+
+    private async Task InitializeSortable()
+    {
+        await JSRuntime.InvokeVoidAsync(
+            "initializeSortable", 
+            questionsContainer, 
+            DotNetObjectReference.Create(this));
+    }
+
+    [JSInvokable]
+    public async Task UpdateQuestionOrder(int oldIndex, int newIndex)
+    {
+        if (oldIndex == newIndex || oldIndex < 0 || newIndex < 0 || oldIndex >= Questions.Count || newIndex >= Questions.Count)
+            return;
+
+        var question = Questions[oldIndex];
+
+        Questions.RemoveAt(oldIndex);
+        Questions.Insert(newIndex, question);
+
+        await QuestionsChanged.InvokeAsync(Questions);
+        StateHasChanged();
+    }
+
+    private async Task AddQuestion()
+    {
+        Questions.Add(new Question {Title = "", QuestionType = QuestionType.SingleLine, TemplateId = Questions.First().TemplateId});
+        await QuestionsChanged.InvokeAsync(Questions);
+    }
+
+    private async Task DeleteQuestion(Question question)
+    {
+        Questions.Remove(question);
+        await OnDelete.InvokeAsync(question);
+        await QuestionsChanged.InvokeAsync(Questions);
+    }
+
+    private async Task AddOption(Question question)
+    {
+        if (question == null)
+            return;
+
+        if (question.Options == null)
+            question.Options = new List<QuestionOption>();
+
+        question.Options.Add(Option);
+        await QuestionsChanged.InvokeAsync(Questions);
+        Option = new QuestionOption();
+        StateHasChanged();
+    }
+
+    private async Task DeleteOption(Question question, QuestionOption option)
+    {
+        question.Options.Remove(option);
+        await QuestionsChanged.InvokeAsync(Questions);
+    }
+}

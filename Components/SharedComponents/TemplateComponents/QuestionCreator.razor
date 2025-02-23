@@ -1,0 +1,121 @@
+﻿@using iTFORMS.Models.Enums
+
+<!-- Add question form -->
+<div class="row">
+    <div class="form-group col-lg-8">
+        <InputText id="questionTitle" class="form-control" @bind-Value="Question.Title" placeholder="Question..."/>
+    </div>
+    <div class="form-group col-lg-4">
+        <InputSelect id="questionType" class="form-select" @bind-Value="Question.QuestionType">
+            @foreach (var type in Enum.GetValues(typeof(QuestionType)))
+            {
+                @switch (type)
+                {
+                    case QuestionType.SingleLine:
+                        <option value="@type">Short Answer</option>
+                        break;
+
+                    case QuestionType.Paragraph:
+                        <option value="@type">Long Text Answer</option>
+                        break;
+
+                    case QuestionType.MultipleChoice:
+                        <option value="@type">Multiple Choice</option>
+                        break;
+
+                    case QuestionType.CheckBox:
+                        <option value="@type">CheckBox Answer</option>
+                        break;
+
+                    case QuestionType.Integer:
+                        <option value="@type">Number</option>
+                        break;
+                } 
+            }
+        </InputSelect>
+    </div>
+</div>        
+
+<div class="form-group mt-3 col-lg-5 answerType">
+        @switch (Question.QuestionType)
+        {
+            case QuestionType.SingleLine:
+                <p><strong>Short</strong> Answer.</p>
+                break;
+
+            case QuestionType.Paragraph:
+                <p><strong>Long Text</strong> Answer.</p>
+                break;
+
+            case QuestionType.Integer:
+                <p><strong>Integer</strong> Answer.</p>
+                break;
+
+            case QuestionType.MultipleChoice:
+                <p><strong>Multiple Choice</strong> Answer.</p>
+                break;
+
+            case QuestionType.CheckBox:
+                <p><strong>CheckBox</strong> Answer.</p>
+                break;
+
+        }
+</div>
+
+
+<div class="mt-2">
+    <button class="btn btn-primary" @onclick="Save">Save</button>
+    <button class="btn btn-outline-secondary text-black" @onclick="Cancel">Cancel</button>
+</div>
+
+<style>
+    #questionTitle {
+        border-radius:0 ;
+        border: none;
+    }
+
+    #questionTitle:focus {
+        border-bottom:1px solid #252424 ;
+    } 
+
+    #questionType {
+        border-radius:0 ;
+        border: none;
+        border-bottom:1px solid #252424 ;
+        outline: 0;
+        box-shadow: 0 0 0 0 #252424;
+    }
+
+    #questionType:focus {
+        border-bottom:1px solid #252424 ;
+    }
+
+    .answerType {
+        border-bottom: 1px solid #919090;
+        color: #767575; 
+        font-size: 14px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Template Template { get; set; }
+    [Parameter]
+    public Question Question {get; set;}
+    
+    [Parameter] public EventCallback<Question> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task Save()
+    {
+        if(Template != null) 
+            Question.TemplateId = Template.TemplateId;
+        await OnSave.InvokeAsync(Question);
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+}

@@ -1,0 +1,79 @@
+﻿<nav class="navbar navbar-expand-lg bg-white py-3" style="border: none; border-radius: 6px;">
+    <div class="container-fluid">
+        <!-- Brand and Toggler -->
+        <div class="row d-flex align-items-center">
+            <a href="/" class="navbar-brand fs-4 me-3" style="letter-spacing: -1px; color: #2c2e32; min-width: 120px;">
+                iTForms
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+
+        <!-- Navbar Content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Search Bar -->
+            <div class="w-100 mx-3 my-2 my-lg-0" style="max-width: 600px;">
+                <div class="input-group">
+                    <input class="form-control rounded-pill ps-5"
+                           type="search"
+                           placeholder="Search forms..."
+                           style="height: 44px;">
+                    <span class="position-absolute start-0 top-50 translate-middle-y ms-3">
+                        <i class="material-icons text-secondary">search</i>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Auth Buttons -->
+            <div class="d-flex align-items-center gap-2 ms-lg-auto mt-3 mt-lg-0">
+                <button class="btn btn-outline-secondary px-4" onclick="LoginRedirect">
+                    Login
+                </button>
+                <button class="btn btn-primary px-4 shadow-sm">
+                    Sign Up
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .navbar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: gray;
+        box-shadow: none;
+    }
+
+    .btn-outline-secondary {
+        border-width: 1px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        transition: all 0.2s ease;
+        border: none;
+        background-color: #683ab7d2 !important;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(127, 128, 129, 0.3);
+    }
+
+    .btn:focus {
+        border: none;
+        box-shadow: none !important;
+    }
+
+    @@media (min-width: 992px) {
+        .navbar {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    }
+</style>
