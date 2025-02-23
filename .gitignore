@@ -1,3 +1,4 @@
+
 # General
 *.user
 *.suo
@@ -53,6 +54,12 @@ funcsecrets.json
 
 # VS Cache
 .vs/
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+**/.docker/
 
 # Local Development
 local.settings.json
