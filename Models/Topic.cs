@@ -6,7 +6,7 @@ namespace iTFORMS.Models;
 public class Topic()
 {
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; }  = Guid.NewGuid();
     
     [Required]
     [MaxLength(100)]

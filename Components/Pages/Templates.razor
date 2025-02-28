@@ -1,5 +1,10 @@
-@page "/templates/{TemplateId}/"
+@page "/templates/{TemplateId:guid}/edit"
+
 @using iTFORMS.IServices
+@using Microsoft.AspNetCore.Authorization
+
+@* @attribute [Authorize] *@
+
 @inject HttpClient Http
 @rendermode InteractiveServer
 @inject ITemplateService TemplateService
@@ -7,43 +12,61 @@
 <div class="container-fluid" style="background-color: #f0ebf8;">
     <div class="container p-4">
         <div class="row">
-        <div class="nav nav-tabs mb-4 col-lg-8">
-            <a class="nav-link @GetTabClass("settings")"
-                    href="/templates/@TemplateId/"
-                    @onclick="@(() => {
-                    ActiveTab = "settings";
-                    StateHasChanged();
-                    })">
-                Settings
-            </a>
-            <a class="nav-link @GetTabClass("questions")" 
-                    href="/templates/@TemplateId/#questions"
-                    @onclick="@(() => {
-                    ActiveTab = "questions";
-                    StateHasChanged();
-                    })">
-                Questions
-            </a>
-            <a class="nav-link @GetTabClass("responses")"
-                    href="/templates/@TemplateId/#responses" 
-                    @onclick="@(() => {
-                    ActiveTab = "responses";
-                    StateHasChanged();
-                    })">
-                Responses
-            </a>
-        </div>
-        <div class="col-lg-2 offset-2 d-flex justify-content-end align-items-center">
-            <button @onclick="PublishTemplate" class="btn btn-primary w-100" style="font-size: 19px;">Publish</button>
-        </div>
-        </div>
+            <div class="nav nav-tabs mb-4 col-lg-8">
+                <a class="nav-link @GetTabClass("settings")"
+                        href="/templates/@TemplateId/edit"
+                        @onclick="@(() => {
+                        ActiveTab = "settings";
+                        StateHasChanged();
+                        })">
+                    Settings
+                </a>
+                <a class="nav-link @GetTabClass("questions")" 
+                        href="/templates/@TemplateId/edit#questions"
+                        @onclick="@(() => {
+                        ActiveTab = "questions";
+                        StateHasChanged();
+                        })">
+                    Questions
+                </a>
+                <a class="nav-link @GetTabClass("responses")"
+                        href="/templates/@TemplateId/edit#responses" 
+                        @onclick="@(() => {
+                        ActiveTab = "responses";
+                        StateHasChanged();
+                        })">
+                    Responses
+                </a>
+            </div>
+            <div class="col-lg-4 offset-4">
+                <div class="modal fade @(showModal ? "show d-block" : "")" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Success</h5>
+                                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Template settings saved successfuly</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success" @onclick="CloseModal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 offset-2 d-flex justify-content-end align-items-center">
+                <button @onclick="PublishTemplate" class="btn btn-primary w-100" style="font-size: 19px;">Publish</button>
+            </div>
 
-        <!-- Tab Content -->
-        <div class="tab-content">
+            <!-- Tab Content -->
+            <div class="tab-content">
             @if (ActiveTab == "settings")
             {
                 <TemplateSettings Topics="@Topics" 
-                                Template="@template" 
+                                Template="@template"
+                                Tags="@Tags"
                                 OnSave="HandleSave" 
                                 ShowModal="@showModal" 
                                 ShowModalChanged="@((value) => showModal = value)"/>
@@ -51,18 +74,17 @@
             else if (ActiveTab == "questions")
             {
                 <TemplateQuestions @ref="questionsComponent" 
-                                  Template="@template" 
+                                  Template="@template"
                                   OnQuestionsUpdated="HandleQuestionsUpdate"/>
             }
             else if (ActiveTab == "responses")
             {
-                <TemplateResponses TemplateId="@TemplateId" />
+                <TemplateResponses Template="@template"/>
             }
+            </div>
         </div>
     </div>
-
 </div>
-
 <style>
     .nav-link {
         color: black;
@@ -77,12 +99,80 @@
         border: transparent !important;
         border-bottom: 2px solid black !important;
     }
+    /* Modal backdrop */
+    .modal {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Modal dialog */
+    .modal-dialog {
+        max-width: 500px;
+    }
+
+    /* Modal content */
+    .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Modal header */
+    .modal-header {
+        border-bottom: none;
+        padding: 20px;
+        background-color: #4CAF50;
+        color: white;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    /* Close button */
+    .modal-header .btn-close {
+        filter: invert(1);
+    }
+
+    /* Modal body */
+    .modal-body {
+        padding: 20px;
+        font-size: 1rem;
+        color: #333;
+    }
+
+    /* Modal footer */
+    .modal-footer {
+        border-top: none;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+    /* Primary button */
+    .modal-footer .btn-primary {
+        background-color: #4CAF50;
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+    }
+
+    .modal-footer .btn-primary:hover {
+        background-color: #45a049;
+    }
 </style>
 
 @code {
-    [Parameter] public string? TemplateId { get; set; }
+    [Parameter] public Guid? TemplateId { get; set; }
     private Template template = new();
-    private List<Topic> Topics = new List<Topic>();
+
+    private List<Topic> Topics = new();
+    
+    private List<Tag> Tags = new(); 
 
     private string ActiveTab = "settings";
     private TemplateQuestions? questionsComponent;
@@ -92,11 +182,35 @@
     private string GetTabClass(string tabName) => 
         ActiveTab == tabName ? "active" : "";
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (TemplateId.HasValue)
+        {
+            template = await TemplateService.GetTemplateByIdAsync(TemplateId.Value) ?? new Template();
+            template.Questions ??= new List<Question>();
+        }
+        else
+        {
+            template = new Template();
+        }
+        
+        for (var i = 0; i < template.Questions.Count; i++)
+        {
+            template.Questions[i].Order = i + 1;
+        }
+    }
+
     private void HandleSave()
     {
         try
         {
+            if (string.IsNullOrEmpty(template.Description) || string.IsNullOrEmpty(template.Title) || string.IsNullOrEmpty(template.ImageUrl))
+            {
+                Console.WriteLine("Please fill in the required fields.");
+                return;
+            }
             showModal = true;
+            ActiveTab = "questions";
         }
         catch (Exception ex)
         {
@@ -104,18 +218,24 @@
         }
     }
 
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
     private async Task PublishTemplate()
     {
         try
         {
-            if (string.IsNullOrEmpty(template.Description) || string.IsNullOrEmpty(template.Title))
+            if (string.IsNullOrEmpty(template.Description) || string.IsNullOrEmpty(template.Title) || string.IsNullOrEmpty(template.ImageUrl))
             {
                 Console.WriteLine("Please fill in the required fields.");
+                ActiveTab = "settings";
                 return;
             }
-            template.AuthorId = "";
+            template.TemplateId = TemplateId.Value;     
             await TemplateService.PublishTemplateAsync(template);
-            Console.WriteLine("Template published successfully.");
+            showModal = true;
         }
         catch (Exception ex)
         {
@@ -123,8 +243,12 @@
         }
     }
         
-    public void HandleQuestionsUpdate(List<Question> updatedQuestions) {
-        template.Questions = new List<Question>(updatedQuestions);
+    public void HandleQuestionsUpdate(List<Question> updatedQuestions)
+    {
+        template.Questions = updatedQuestions
+            .OrderBy(q => q.Order)
+            .ToList();
+        
         StateHasChanged();
     }
 }

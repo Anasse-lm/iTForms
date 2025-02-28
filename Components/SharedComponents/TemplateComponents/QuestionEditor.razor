@@ -14,7 +14,7 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col-lg-8">
-                                <input id="questionTitle" class="form-control" 
+                                <input id="questionTitle" class="form-control" placeholder="Enter your question here... " 
                                     @bind="question.Title"
                                     @bind:event="oninput" />
                             </div>
@@ -155,7 +155,7 @@
     private bool isInitialized = false;
 
     [Parameter]
-    public List<Question> Questions { get; set; }
+    public List<Question> Questions { get; set; } = new();
     private QuestionOption Option {get; set;} = new();
     
     [Parameter]
@@ -193,14 +193,35 @@
         Questions.RemoveAt(oldIndex);
         Questions.Insert(newIndex, question);
 
+        for (var i = 0; i < Questions.Count; i++)
+        {
+            Questions[i].Order = i + 1;
+        }
+
         await QuestionsChanged.InvokeAsync(Questions);
         StateHasChanged();
     }
 
-    private async Task AddQuestion()
+   private async Task AddQuestion()
     {
-        Questions.Add(new Question {Title = "", QuestionType = QuestionType.SingleLine, TemplateId = Questions.First().TemplateId});
+        var newOrder = Questions.Any() ? Questions.Max(q => q.Order) + 1 : 1;
+        
+        Questions.Add(new Question {
+            Title = "",
+            QuestionType = QuestionType.SingleLine,
+            TemplateId = Questions.FirstOrDefault()?.TemplateId ?? default,
+            Order = newOrder
+        });
+        
         await QuestionsChanged.InvokeAsync(Questions);
+    }
+
+    private void UpdateQuestionOrders()
+    {
+        for (int i = 0; i < Questions.Count; i++)
+        {
+            Questions[i].Order = i + 1;
+        }
     }
 
     private async Task DeleteQuestion(Question question)

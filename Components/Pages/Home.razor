@@ -1,6 +1,7 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
 @using iTFORMS.Components.SharedComponents.HomeComponents
-
+@attribute [AllowAnonymous] 
 <PageTitle>iTFORMS</PageTitle>
 
 <div class="container-fluid template-view-container">
@@ -37,6 +38,5 @@
 </style>
 
 @code{
-
+    
 }
-

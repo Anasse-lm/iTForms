@@ -9,9 +9,10 @@ public class TemplateService(DBContext context) : ITemplateService
 {
     private readonly DBContext _context = context;
 
-    public Task<Template> GetTemplateByIdAsync(Guid templateId)
+    public async Task<Template> GetTemplateByIdAsync(Guid templateId)
     {
-        throw new NotImplementedException();
+        var template = await _context.Templates.FindAsync(templateId);
+        return template;
     }
 
     public async Task<Template> PublishTemplateAsync(Template template)
@@ -23,17 +24,16 @@ public class TemplateService(DBContext context) : ITemplateService
             foreach (var question in template.Questions)
             {
                 question.QuestionId = Guid.NewGuid();
-                question.TemplateId = template.TemplateId; // Set foreign key
+                question.TemplateId = template.TemplateId;
                 
                 foreach (var option in question.Options)
                 {
                     option.Id = Guid.NewGuid();
-                    option.QuestionId = question.QuestionId; // Set foreign key
+                    option.QuestionId = question.QuestionId;
                 }
             }
             await _context.Templates.AddAsync(template);
             
-            // Handle existing topics
             foreach (var templateTopic in template.TemplateTopics)
             {
                 if (templateTopic.Topic?.Id != Guid.Empty)
@@ -51,10 +51,5 @@ public class TemplateService(DBContext context) : ITemplateService
             await transaction.RollbackAsync();
             throw;
         }
-    }
-
-    public Task<bool> ValidateTemplateAsync(Template template)
-    {
-        throw new NotImplementedException();
     }
 }

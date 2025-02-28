@@ -1,11 +1,10 @@
-
 namespace iTFORMS.Models;
 
-public class TemplateTopic
+public class TemplateTag
 {
     public Guid TemplateId { get; set; }
     public Template? Template { get; set; }
     
-    public Guid TopicId { get; set; }
-    public Topic? Topic { get; set; }
+    public Guid TagId { get; set; }
+    public Tag? Tag { get; set; }
 }

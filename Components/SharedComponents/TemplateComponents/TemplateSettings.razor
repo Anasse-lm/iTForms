@@ -7,12 +7,30 @@
 
 <div class="card shadow col-lg-6 offset-3">
     <div class="card-body">
-        <div class="offset-4 col-12 col-lg-3 col-md-3 mb-2 publish-row">
+        <div class="offset-4 col-12 col-lg-4 col-md-3 mb-2 publish-row">
             <input @bind="@TitleValue" @bind:event="oninput" class="form-control text-center" onclick="this.select()"/>
         </div>
         <div class="form-group mb-4">
             <label class="form-label fw-bold">Description</label>
             <textarea class="form-control" @bind="Template.Description" rows="4"></textarea>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">Tags</label>
+                    <div class="tags-container w-100">
+                        @if(HashTags.Any()) {
+                                @foreach (var tag in HashTags)
+                                {
+                                    <span>#@tag.Content</span>
+                                    <button class="tag-remove" @onclick="() => RemoveTag(tag)">×</button>
+                                }
+                        }
+                        <InputText class="tag-input w-100" @bind-Value="NewTag" @onkeydown="HandleInput" placeholder="Add Tags here..."/>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row">
@@ -75,7 +93,6 @@
         </div>
         <div class="row">
             <div class="col-lg-4 offset-4">
-                <!-- Add other form fields -->
                 <div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
@@ -87,7 +104,7 @@
                                 <p>Template settings saved successfuly</p>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" @onclick="CloseModal">Close</button>
+                                <button type="button" class="btn btn-success" @onclick="CloseModal">Close</button>
                             </div>
                         </div>
                 </div>
@@ -117,21 +134,71 @@
         height: 250px;
     }
     
+    /* Container for tags and input */
+    .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        border: 1px solid #ccc;
+        padding: 8px;
+        border-radius: 4px;
+    }
+
+    /* Individual tag styling */
+    .tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e9ecef;
+        padding: 4px 8px;
+        font-size: 14px;
+    }
+
+    /* Delete button (X) inside the tag */
+    .tag-remove {
+        background: none;
+        border: none;
+        color: #6c757d;
+        margin-left: 8px;
+        cursor: pointer;
+        padding: 0;
+        font-size: 16px;
+    }
+
+    .tag-remove:hover {
+        color: #dc3545; /* Red color on hover */
+    }
+
+    .tag-input {
+        border: none !important;
+        outline: none !important;
+        padding: 4px;
+        min-width: 100px;
+    }
+    .tag-input:focus {
+        border: none !important;
+        outline: none !important;
+    }
+
 </style>
 
 @code {
     [Parameter] public Template Template { get; set; }
     [Parameter] public List<Topic> Topics { get; set; }
+    [Parameter] public List<Tag> Tags { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
     [Parameter] public bool ShowModal { get; set; }
     [Parameter] public EventCallback<bool> ShowModalChanged { get; set; }
 
+    public string NewTag { get; set; }
+    private HashSet<Tag> HashTags { get; set; } = new();
+    
     private string valueStr = "";
 
     private string DisplayValue
     {
-        get => string.IsNullOrEmpty(valueStr.Trim()) ? "Untitled form" : valueStr;
-        set => valueStr = value == "Untitled form" ? "" : value;
+        get => string.IsNullOrEmpty(valueStr.Trim()) ? "Untitled Template" : valueStr;
+        set => valueStr = value == "Untitled Template" ? "" : value;
     }
     private string TitleValue
     {
@@ -139,24 +206,17 @@
         set => Template.Title = value;
     }
 
-    private async Task CloseModal()
-    {
-        await ShowModalChanged.InvokeAsync(false);
-    }
-    public void SaveSettings() {
-        OnSave.InvokeAsync();
-    }
 
     private async Task UploadImage(InputFileChangeEventArgs e)
     {
-        var file = e.GetMultipleFiles(1).FirstOrDefault(); // Get first file
+        var file = e.GetMultipleFiles(1).FirstOrDefault();
         if (file == null || !IsValidImage(file)) return;
 
         try 
         {
             using var memoryStream = new MemoryStream();
             await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(memoryStream);
-            memoryStream.Position = 0; // ← Critical reset!
+            memoryStream.Position = 0;
 
             var uploadResult = await CloudinaryService.UploadAsync(new ImageUploadParams
             {
@@ -181,6 +241,43 @@
         var validTypes = new[] { "image/jpeg", "image/png", "image/gif" };
         return validTypes.Contains(file.ContentType) 
             && file.Size <= 5 * 1024 * 1024; // 5MB
+    }
+
+    private void HandleInput(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(NewTag))
+        {
+            Console.WriteLine(e.Key + " is clicked");
+            AddTag();
+        }
+    }
+
+    private void AddTag() {
+        if (!string.IsNullOrWhiteSpace(NewTag) && !HashTags.Any(tag => tag.Content == NewTag))
+        {
+            var tag = new Tag { Content = NewTag };
+            NewTag = string.Empty;
+            HashTags.Add(tag);
+            StateHasChanged();
+        }
+        else{
+            NewTag = string.Empty;
+        }
+    }
+
+    private void RemoveTag(Tag tag)
+    {
+        HashTags.Remove(tag);
+        StateHasChanged();
+    }
+
+    private async Task CloseModal()
+    {
+        await ShowModalChanged.InvokeAsync(false);
+    }
+    public void SaveSettings() {
+        Tags = new(HashTags.ToList());
+        OnSave.InvokeAsync();
     }
 
 }

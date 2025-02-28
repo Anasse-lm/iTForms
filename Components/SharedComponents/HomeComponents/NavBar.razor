@@ -1,4 +1,9 @@
-﻿<nav class="navbar navbar-expand-lg bg-white py-3" style="border: none; border-radius: 6px;">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+@inject NavigationManager Navigation
+
+<nav class="navbar navbar-expand-lg bg-white py-3" style="border: none; border-radius: 6px;">
     <div class="container-fluid">
         <!-- Brand and Toggler -->
         <div class="row d-flex align-items-center">
@@ -27,12 +32,16 @@
 
             <!-- Auth Buttons -->
             <div class="d-flex align-items-center gap-2 ms-lg-auto mt-3 mt-lg-0">
-                <button class="btn btn-outline-secondary px-4" onclick="LoginRedirect">
-                    Login
-                </button>
-                <button class="btn btn-primary px-4 shadow-sm">
-                    Sign Up
-                </button>
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="/profile" class="nav-link">Profile</a>
+                        <button @onclick="Logout" class="nav-link btn btn-link">Logout</button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/Login" class="nav-link btn btn-link">Login</a>
+                        <a href="/Register" class="nav-link btn btn-link">Register</a>
+                    </NotAuthorized>
+                </AuthorizeView>
             </div>
         </div>
     </div>
@@ -77,3 +86,11 @@
         }
     }
 </style>
+
+@code {
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

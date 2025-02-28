@@ -4,25 +4,12 @@
 <div class="card col-lg-8 offset-2" style="background-color: transparent; border:none ">
     <div class="card-body">
         <div>
-            @if (Template.Questions.Any()) {
                 <QuestionEditor
-                        Questions="@Template.Questions"
+                        Questions="Template.Questions"
                         OnDelete="DeleteQuestion"
                         QuestionsChanged="OnQuestionsUpdated" />
-            }
-
-            @if (showQuestionCreator)
-            {
-                <div class="card shadow">
-                    <div class="card-body">
-                        <QuestionCreator Question="@newQuestion" OnSave="SaveNewQuestion" OnCancel="CloseQuestionCreator" />
-                    </div>
-                </div>
-            }
+            
         </div>
-        @if(showAddNewBtn){
-            <button @onclick="ShowQuestionCreator" class="btn btn-primary mt-3">Add New Question</button>
-        }
     </div>
 </div>
 
@@ -35,10 +22,10 @@
     public EventCallback<List<Question>> OnQuestionsUpdated { get; set; }
 
     public Question newQuestion = new Question();
+    private QuestionEditor? questionEditorRef;
 
     private bool showQuestionCreator = false;
     private bool showAddNewBtn = true;
-
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
@@ -48,17 +35,6 @@
         }
     }
 
-
-    private void ShowQuestionCreator()
-    {
-        showQuestionCreator = true;
-    }
-
-    private void CloseQuestionCreator()
-    {
-        showQuestionCreator = false;
-    }
-
     private async Task SaveNewQuestion(Question newQuestion)
     {
         if (Template.Questions == null)
@@ -66,7 +42,14 @@
             Template.Questions = new List<Question>();
         }
 
+        // Set proper order
+        newQuestion.Order = Template.Questions.Any() 
+            ? Template.Questions.Max(q => q.Order) + 1 
+            : 1;
+
+        newQuestion.TemplateId = Template.TemplateId;
         Template.Questions.Add(newQuestion);
+        
         await OnQuestionsUpdated.InvokeAsync(Template.Questions);
         showQuestionCreator = false;
         showAddNewBtn = false;
@@ -78,5 +61,4 @@
         Template.Questions.Remove(question);
         StateHasChanged();
     }
-    
 }

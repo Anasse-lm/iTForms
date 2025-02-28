@@ -1,0 +1,150 @@
+@page "/login"
+@using Microsoft.AspNetCore.Identity
+@using iTFORMS.Models
+@inject NavigationManager Navigation
+@inject SignInManager<User> SignInManager
+@rendermode InteractiveServer
+
+<div class="login-container">
+    <div class="login-box">
+        <h2>Login</h2>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" class="form-control" @bind-value="email" @bind-value:event="oninput"/>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" type="password" class="form-control" @bind-value="password" @bind-value:event="oninput"/>
+        </div>
+
+        <button type="button" class="btn btn-primary" @onclick="HandleLogin">Login</button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <div class="signup-link">
+            Don't have an account? <a href="/register">Sign up</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Login Container */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+}
+
+/* Login Box */
+.login-box {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-box h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+/* Button Styles */
+.btn-primary {
+    width: 100%;
+    padding: 0.75rem;
+    background: #2575fc;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #1b5fd9;
+}
+
+/* Error Message */
+.alert-danger {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
+    border-radius: 5px;
+    color: #c62828;
+}
+
+/* Signup Link */
+.signup-link {
+    margin-top: 1rem;
+    color: #666;
+}
+
+.signup-link a {
+    color: #2575fc;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+</style>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string errorMessage = "";
+
+    private async Task HandleLogin()
+    {
+        // Basic manual validation
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            errorMessage = "Email and password are required.";
+            return;
+        }
+
+        // Attempt to sign in the user
+        var result = await SignInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = "Invalid login attempt.";
+        }
+    }
+}

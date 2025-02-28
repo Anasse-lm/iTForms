@@ -1,9 +1,17 @@
-using System;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 namespace iTFORMS.Models;
 
-public class User
+public class User : IdentityUser<Guid>
 {
-    private Guid UserId {get; set;}
-    
+    [Required]
+    [MaxLength(100)]
+    public required string FirstName { get; set; } = "";
+
+    [Required]
+    [MaxLength(100)]
+    public required string LastName { get; set; } = "";
+
+    public List<Template> Templates { get; set; } = [];
 }
