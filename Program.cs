@@ -7,36 +7,44 @@ using iTFORMS.Services;
 using iTFORMS.Data;
 using iTFORMS.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add Razor Pages support for Identity UI
 builder.Services.AddRazorPages();
-
-
-// Configure DBContext with SQL Server
-builder.Services.AddDbContext<DBContext>(options => 
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
-
-// Configure Identity with custom User and Role types
-builder.Services.AddIdentity<User, IdentityRole<Guid>>()
-    .AddEntityFrameworkStores<DBContext>()
-    .AddDefaultTokenProviders();
-
-// Register custom authentication state provider
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+builder.Services.AddServerSideBlazor();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/login";
-    options.AccessDeniedPath = "/access-denied"; 
+    options.AccessDeniedPath = "/access-denied";
 });
+
+builder.Services.AddAuthorizationCore();
+
+// Configure Database Context
+builder.Services.AddDbContext<DBContext>(options => 
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
+
+// Identity Configuration
+builder.Services.AddIdentity<User, IdentityRole<Guid>>(options =>
+    {
+        options.Lockout.AllowedForNewUsers = false;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+
+        options.SignIn.RequireConfirmedEmail = false; 
+        options.SignIn.RequireConfirmedAccount = false;
+    })
+    .AddEntityFrameworkStores<DBContext>()
+    .AddRoles<IdentityRole<Guid>>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+    
 
 // Register application services
 builder.Services.AddScoped<ITemplateService, TemplateService>();
@@ -48,7 +56,7 @@ builder.Services.AddHttpClient();
 // Load environment variables
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5));
 
-// Validate and configure Cloudinary
+// Cloudinary Configuration
 var cloudinaryUrl = Environment.GetEnvironmentVariable("CLOUDINARY_URL") 
     ?? throw new InvalidOperationException("CLOUDINARY_URL is missing in .env!");
 
@@ -56,7 +64,7 @@ builder.Services.AddSingleton(new Cloudinary(cloudinaryUrl) { Api = { Secure = t
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Middleware pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -67,15 +75,16 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+app.UseMiddleware<BlazorLogoutMiddleware>();
 
+// Order matters: Authentication -> Authorization -> Custom Middleware
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<BlazorCookieLoginMiddleware>();
 
-// Configure endpoints
+// Configure Blazor components
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Map Razor Pages for Identity
-app.MapRazorPages();
 
 app.Run();

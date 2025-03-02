@@ -22,6 +22,12 @@ public class DBContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.Property(u => u.LockoutEnabled)
+                .HasDefaultValue(false);
+        });
+
         modelBuilder.Entity<Template>(entity =>
         {
             entity.Property(t => t.TemplateId)

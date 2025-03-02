@@ -1,0 +1,33 @@
+@page "/profile"
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using iTFORMS.Components.SharedComponents.HomeComponents
+
+<PageTitle>iTFORMS</PageTitle>
+
+<div class="container-fluid template-history-view">
+    <div class="container pt-3">
+        <div class="row d-flex align-items-center">
+            <div class="offset-lg-1 col-lg-5">
+                Yesterday
+            </div>
+            <SelectList />
+            <div class="col-lg-4">
+                Last opened by me
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .template-view-container{
+        height: 250px;
+        background-color: #f1f3f4;
+    }
+</style>
+
+@code {
+
+}

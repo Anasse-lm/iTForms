@@ -2,6 +2,8 @@
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<User> SignInManager
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
 
 <nav class="navbar navbar-expand-lg bg-white py-3" style="border: none; border-radius: 6px;">
     <div class="container-fluid">
@@ -32,16 +34,18 @@
 
             <!-- Auth Buttons -->
             <div class="d-flex align-items-center gap-2 ms-lg-auto mt-3 mt-lg-0">
-                <AuthorizeView>
-                    <Authorized>
-                        <a href="/profile" class="nav-link">Profile</a>
-                        <button @onclick="Logout" class="nav-link btn btn-link">Logout</button>
-                    </Authorized>
-                    <NotAuthorized>
-                        <a href="/Login" class="nav-link btn btn-link">Login</a>
-                        <a href="/Register" class="nav-link btn btn-link">Register</a>
-                    </NotAuthorized>
-                </AuthorizeView>
+                <CascadingAuthenticationState>
+                    <AuthorizeView>
+                        <Authorized>
+                            <a href="/profile" class="nav-link">Profile</a>
+                            <button @onclick="Logout" class="nav-link btn btn-link">Logout</button>
+                        </Authorized>
+                        <NotAuthorized>
+                            <a href="/login" class="nav-link btn btn-link">Login</a>
+                            <a href="/register" class="nav-link btn btn-link">Register</a>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </CascadingAuthenticationState>
             </div>
         </div>
     </div>
@@ -90,7 +94,6 @@
 @code {
     private async Task Logout()
     {
-        await SignInManager.SignOutAsync();
-        Navigation.NavigateTo("/", forceLoad: true);
+        Navigation.NavigateTo("/logout", forceLoad: true);
     }
 }

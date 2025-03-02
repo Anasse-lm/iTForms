@@ -3,27 +3,29 @@
 @using iTFORMS.Models
 @inject NavigationManager Navigation
 @inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
 @rendermode InteractiveServer
 
 <div class="login-container">
     <div class="login-box">
         <h2>Login</h2>
-
         <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" class="form-control" @bind-value="email" @bind-value:event="oninput"/>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input id="email" class="form-control" @bind="Email"/>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" type="password" class="form-control" @bind="password"/>
+            </div>
+
+            <button type="button" class="btn btn-primary" @onclick="LoginClicked">Login</button>
         </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input id="password" type="password" class="form-control" @bind-value="password" @bind-value:event="oninput"/>
-        </div>
-
-        <button type="button" class="btn btn-primary" @onclick="HandleLogin">Login</button>
-
-        @if (!string.IsNullOrEmpty(errorMessage))
+        @if (!string.IsNullOrEmpty(error))
         {
-            <div class="alert alert-danger">@errorMessage</div>
+            <div class="alert alert-danger">@error</div>
         }
 
         <div class="signup-link">
@@ -122,29 +124,40 @@
 </style>
 
 @code {
-    private string email = "";
-    private string password = "";
-    private string errorMessage = "";
+    public string Email { get; set; }
 
-    private async Task HandleLogin()
+    private string password;
+    private string error;
+
+    private async Task LoginClicked()
     {
-        // Basic manual validation
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        error = null;
+        var usr = await UserManager.FindByEmailAsync(Email);
+        if (usr == null)
         {
-            errorMessage = "Email and password are required.";
+            error = "User not found";
             return;
         }
 
-        // Attempt to sign in the user
-        var result = await SignInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: false);
 
-        if (result.Succeeded)
+        if (await SignInManager.CanSignInAsync(usr))
         {
-            Navigation.NavigateTo("/", forceLoad: true);
+            var result = await SignInManager.CheckPasswordSignInAsync(usr, password, false);
+            if (result == Microsoft.AspNetCore.Identity.SignInResult.Success)
+            {
+                Guid key = Guid.NewGuid();
+                BlazorCookieLoginMiddleware.Logins[key] = new LoginInfo { Email = Email, Password = password };
+                Navigation.NavigateTo($"/login?key={key}", true);
+            }
+            else
+            {
+                error = "Login failed. Check your password.";
+            }
         }
         else
         {
-            errorMessage = "Invalid login attempt.";
+            error = "Your account is blocked";
         }
     }
+
 }

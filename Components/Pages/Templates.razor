@@ -2,8 +2,11 @@
 
 @using iTFORMS.IServices
 @using Microsoft.AspNetCore.Authorization
+@inject UserManager<User> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
 
-@* @attribute [Authorize] *@
+@attribute [Authorize]
 
 @inject HttpClient Http
 @rendermode InteractiveServer
@@ -181,9 +184,22 @@
 
     private string GetTabClass(string tabName) => 
         ActiveTab == tabName ? "active" : "";
+    private Guid userId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+            if (currentUser != null)
+            {
+                userId = currentUser.Id;
+            }
+        }
+
         if (TemplateId.HasValue)
         {
             template = await TemplateService.GetTemplateByIdAsync(TemplateId.Value) ?? new Template();
@@ -233,9 +249,12 @@
                 ActiveTab = "settings";
                 return;
             }
-            template.TemplateId = TemplateId.Value;     
+            template.TemplateId = TemplateId.Value;
+            template.UserId = userId;
             await TemplateService.PublishTemplateAsync(template);
             showModal = true;
+
+            NavigationManager.NavigateTo("/");
         }
         catch (Exception ex)
         {
