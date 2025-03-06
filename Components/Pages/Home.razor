@@ -4,6 +4,8 @@
 @attribute [AllowAnonymous]
 <PageTitle>iTFORMS</PageTitle>
 
+<NavBar/>
+
 <div class="container-fluid template-view-container">
     <div class="container pt-3">
         <div class="row mb-2">
@@ -14,12 +16,17 @@
         <div class="row">
             <TemplateView />
         </div>
+        <div class="row pt-3">
+            <div class="offset-1">
+                <TemplatesList/>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
     .template-view-container{
-        height: 250px;
+        height: 258px;
         background-color: #f1f3f4;
     }
 </style>

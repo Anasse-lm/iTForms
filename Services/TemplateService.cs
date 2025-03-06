@@ -11,8 +11,18 @@ public class TemplateService(DBContext context) : ITemplateService
 
     public async Task<Template> GetTemplateByIdAsync(Guid templateId)
     {
-        var template = await _context.Templates.FindAsync(templateId);
+        var template = await _context.Templates
+            .Include(t => t.Questions)
+            .FirstOrDefaultAsync(t => t.TemplateId == templateId);
+            
         return template;
+    }
+
+     public async Task<List<Template>> GetTemplatesByUserAsync(Guid currentId)
+    {
+        return await _context.Templates
+            .Where(t => t.UserId == currentId)
+            .ToListAsync();
     }
 
     public async Task<Template> PublishTemplateAsync(Template template)

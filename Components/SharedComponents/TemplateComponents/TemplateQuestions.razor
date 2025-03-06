@@ -4,10 +4,10 @@
 <div class="card col-lg-8 offset-2" style="background-color: transparent; border:none ">
     <div class="card-body">
         <div>
-                <QuestionEditor
-                        Questions="Template.Questions"
-                        OnDelete="DeleteQuestion"
-                        QuestionsChanged="OnQuestionsUpdated" />
+            <QuestionEditor
+                    Questions="Template.Questions"
+                    OnDelete="DeleteQuestion"
+                    QuestionsChanged="OnQuestionsUpdated" />
             
         </div>
     </div>
@@ -31,6 +31,7 @@
         if (firstRender)
         {
             showAddNewBtn = Template.Questions == null || !Template.Questions.Any();
+            Console.WriteLine(Template.Questions != null ? Template.Questions.Count: "null");
             StateHasChanged();
         }
     }

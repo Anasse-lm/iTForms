@@ -1,0 +1,142 @@
+@using IServices
+@using iTFORMS.Models
+@inject ITemplateService TemplateService
+@inject UserManager<User> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="template-grid">
+    @foreach (var template in templates)
+    {
+        <a class="a" href="/templates/@template.TemplateId/edit">
+            <div class="template-card">
+                <img src="@template.ImageUrl" alt="@template.Title" class="template-image" />
+                <div class="template-content d-flex flex-column">
+                    <h4 class="text-center">@template.Title</h4>
+                    <p>@template.Description</p>
+                <div class="d-flex buttom-content justify-content-between">
+                    
+                    <div class="d-flex align-items-center mt-2 align-self-start">
+                        <span class="ms-1"style="font-size:12px ">@@created by @(template.UserId != userId ? template.User?.FirstName : "me")</span>
+                    </div>
+
+                    <div class="d-flex align-items-center mt-2 align-self-end">
+                        <button class="like-button border-0 bg-transparent text-danger fs-4 d-flex align-items-center">
+                            <i class="fa-solid @(IsLiked ? "fa-heart" : "fa-heart fa-regular")"></i>
+                        </button>
+                        <span class="ms-2 fw-bold">@LikesCount</span>
+                    </div>
+                </div>
+                    @* <button class="like-button" @onclick="() => LikeTemplate(template.TemplateId)">
+                        <span class="material-icons">@(template.IsLiked ? "favorite" : "favorite_border")</span>
+                    </button> *@
+                </div>
+            </div>
+        </a>
+    }
+</div>
+
+<style>
+    .template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-rows: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .template-card {
+        background-color: #fffefe;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+        min-height: 100%; 
+    }
+
+    .template-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .template-image {
+        width: 100%;
+        height: 180px;
+        border-bottom: 4px solid white;
+        object-fit: cover;
+    }
+
+    .template-content {
+        padding: 15px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .template-content h4 {
+        margin: 0 0 10px 0;
+        font-size: 1.25rem;
+        color: #333;
+    }
+
+    .template-content p {
+        margin: 0 0 15px 0;
+        color: #666;
+        flex-grow: 1;
+    }
+
+    .like-button {
+        cursor: pointer;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .like-button i {
+        transition: color 0.2s ease-in-out;
+    }
+
+    .like-button:hover i {
+        color: #ff4757;
+    }
+
+    .like-button span {
+        margin-left: 5px;
+        font-size: 1rem;
+        color: #333;
+    }
+    .a {
+        all: unset;
+        display: inline-block;
+    }
+</style>
+
+@code {
+    private List<iTFORMS.Models.Template> templates { get; set; } = [];
+    private Guid userId { get; set; }
+    private bool IsLiked = false;
+    private int LikesCount = 33;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var currentUser = await UserManager.GetUserAsync(user);
+            if (currentUser != null)
+            {
+                userId = currentUser.Id;
+            }
+        }
+        templates = await TemplateService.GetTemplatesByUserAsync(userId);
+    }
+
+    @* private async Task LikeTemplate(Guid templateId)
+    {
+        
+    } *@
+
+}

@@ -24,7 +24,7 @@
                                 @foreach (var tag in HashTags)
                                 {
                                     <span>#@tag.Content</span>
-                                    <button class="tag-remove" @onclick="() => RemoveTag(tag)">×</button>
+                                    <button class="tag-remove text-danger fs-4" @onclick="() => RemoveTag(tag)">×</button>
                                 }
                         }
                         <InputText class="tag-input w-100" @bind-Value="NewTag" @onkeydown="HandleInput" placeholder="Add Tags here..."/>
@@ -52,13 +52,22 @@
                     <select class="form-select" @bind="Template.AccessType">
                         @foreach (var access in Enum.GetValues(typeof(iTFORMS.Models.Enums.AccessType)))
                         {
-                            <option value="@access">@access</option>
+                            <option value="@access" @onclick="HandleAccessType">@access</option>
                         }
                     </select>
                 </div>
             </div>
         </div>
-
+        @if(Template.AccessType == Models.Enums.AccessType.Restricted){
+          <div class="row">
+            <div class="col-md-12">
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">Add Users</label>
+                    <input type="text" class="form-control" placeholder="Add Users here...">
+                </div>
+            </div>
+        </div>  
+        }
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group mb-4">
@@ -206,7 +215,13 @@
         set => Template.Title = value;
     }
 
+    @* protected override async Task OnInitializedAsync()
+        // here i need to fetch data of topics 
+    } *@
 
+    private void HandleAccessType() {
+        StateHasChanged();
+    }
     private async Task UploadImage(InputFileChangeEventArgs e)
     {
         var file = e.GetMultipleFiles(1).FirstOrDefault();
