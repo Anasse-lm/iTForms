@@ -14,5 +14,5 @@ public class QuestionOption
         
     [ForeignKey("QuestionId")]
     public Question Question { get; set; }
-    public bool IsCorrect { get; set; }
+    public bool IsCorrect { get; set; } = true;
 }
